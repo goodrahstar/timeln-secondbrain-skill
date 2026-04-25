@@ -30,7 +30,7 @@ Your second brain, wired to the user's real Timeln account. When triggered, sile
 {
   "mcpServers": {
     "timeln": {
-      "url": "https://timeln-mcp-production.up.railway.app/sse",
+      "url": "https://timeln-mcp-production.up.railway.app/mcp",
       "headers": {
         "Authorization": "Bearer tln_YOUR_TOKEN_HERE"
       }
