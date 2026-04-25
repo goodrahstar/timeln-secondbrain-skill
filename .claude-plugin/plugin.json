@@ -1,10 +1,10 @@
 {
-  "name": "timeln-second-brain",
+  "name": "timeln-secondbrain-skill",
   "version": "1.0.0",
   "description": "Your Timeln library as a second brain — MECE + PARA reasoning grounded in your real docs and knowledge graph.",
   "author": "Timeln",
   "homepage": "https://timeln.app",
-  "repository": "https://github.com/timeln/timeln-second-brain",
+  "repository": "https://github.com/goodrahstar/timeln-secondbrain-skill",
   "license": "MIT",
   "skills": ["./SKILL.md"],
   "mcpServers": {

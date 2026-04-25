@@ -1,5 +1,5 @@
 ---
-name: timeln-second-brain
+name: timeln-secondbrain-skill
 description: >-
   Acts as the user's virtual second brain — pulls real data from their Timeln
   account (documents + knowledge graph) via the Timeln MCP server, applies MECE
