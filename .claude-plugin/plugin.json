@@ -1,0 +1,19 @@
+{
+  "name": "timeln-second-brain",
+  "version": "1.0.0",
+  "description": "Your Timeln library as a second brain — MECE + PARA reasoning grounded in your real docs and knowledge graph.",
+  "author": "Timeln",
+  "homepage": "https://timeln.app",
+  "repository": "https://github.com/timeln/timeln-second-brain",
+  "license": "MIT",
+  "skills": ["./SKILL.md"],
+  "mcpServers": {
+    "timeln": {
+      "command": "python",
+      "args": ["${pluginDir}/mcp/server.py"],
+      "env": {
+        "TIMELN_API_TOKEN": "${TIMELN_API_TOKEN}"
+      }
+    }
+  }
+}
