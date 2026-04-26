@@ -27,7 +27,7 @@ git clone https://github.com/goodrahstar/timeln-secondbrain-skill ~/.claude/skil
 **What you get:**
 - 🧠 Your AI answers grounded in **your** documents — no hallucinations.
 - 🗺️ MECE gap analysis + PARA framework, applied live to your real knowledge graph.
-- 📊 One command away from an interactive D3 visualization of what you know.
+- 📊 Just ask *"show my knowledge graph"* — the skill builds an interactive D3 visualization and opens it, no commands needed.
 
 See it live: **[timeln.app/download/skill](https://timeln.app/download/skill)** · Read the launch post: **[timeln.app/blog/timeln-second-brain-skill](https://timeln.app/blog/timeln-second-brain-skill)**
 
@@ -105,7 +105,7 @@ The skill triggers automatically on any of those phrases.
 2. Pulls your recent documents (`get_recent_docs`) and subgraphs by topic (`get_topic_entities`).
 3. Applies **MECE gap analysis** (known / emerging / isolated / missing) and **PARA** (projects / areas / resources / archive).
 4. Returns a crisp, opinionated recommendation.
-5. Optionally generates an interactive D3 force-graph (`kg_interactive.html`).
+5. If asked, generates an interactive D3 force-graph (`kg_interactive.html`) — triggered by natural language in the chat window, no scripts to run.
 
 See [`examples/second-brain.md`](examples/second-brain.md) for a sample output.
 

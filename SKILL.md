@@ -90,13 +90,14 @@ For each gap, write: `[Node A] → SHOULD CONNECT TO → [Node B]` — backed by
 
 ### Step 5 — Optional: interactive visualization
 
-If the user asks for a graph/visual/plot, run:
+If the user asks for a graph, visual, or map (e.g. *"show my knowledge graph"*, *"visualise my brain"*, *"plot my topics"*), the skill handles everything — no scripts to run:
 
-```
-python references/build_kg_interactive.py --topics "topic1,topic2,..."
-```
+1. Call `get_topic_entities` for each relevant topic surfaced in steps 3–4.
+2. Merge results into `{nodes, links}` — each node is an entity, each link is a relationship or shared document.
+3. Inject the graph data into `references/kg_interactive_template.html` (replace `__GRAPH_DATA__`) and write the result as `kg_interactive.html` in the workspace root.
+4. Open the file so the user sees it immediately.
 
-It calls `get_topic_entities` for each topic via the MCP, merges into `{nodes, links}`, injects into `references/kg_interactive_template.html`, and writes `kg_interactive.html` to the workspace root. Then `open kg_interactive.html`.
+The user never leaves the chat window — just ask in natural language and the skill produces a ready-to-open HTML file.
 
 Template features: scroll to zoom, drag to pan, click node to focus, double-click to reset, search box, legend filtering, hover tooltips, dashed red "gap" edges.
 
