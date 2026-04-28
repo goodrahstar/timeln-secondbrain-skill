@@ -21,7 +21,7 @@
 </p>
 
 ```bash
-git clone https://github.com/goodrahstar/timeln-secondbrain-skill ~/.claude/skills/timeln-secondbrain-skill
+npx skills add goodrahstar/timeln-secondbrain-skill
 ```
 
 **What you get:**
@@ -57,7 +57,7 @@ No Timeln account → the skill loads, but tools return a friendly *"sign up at 
 ### 2 — Add the skill to your agent
 
 ```bash
-git clone https://github.com/goodrahstar/timeln-secondbrain-skill ~/.claude/skills/timeln-secondbrain-skill
+npx skills add goodrahstar/timeln-secondbrain-skill
 ```
 
 Claude Code and Cursor both auto-discover `SKILL.md` files in these folders:
