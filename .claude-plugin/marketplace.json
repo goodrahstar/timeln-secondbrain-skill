@@ -1,0 +1,28 @@
+{
+  "name": "timeln-secondbrain-skill",
+  "owner": {
+    "name": "Timeln",
+    "email": "support@timeln.app"
+  },
+  "metadata": {
+    "description": "Turn your Timeln library into a live second brain for your AI agent",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "timeln-secondbrain",
+      "source": "./",
+      "description": "Acts as the user's virtual second brain -- pulls real data from their Timeln account via the Timeln MCP server, applies MECE gap analysis and the PARA framework, then returns crisp learning/action recommendations and optionally a D3 knowledge-graph visualization. Use when the user says 'second brain', 'thinking partner', 'what should I learn today', 'connect my ideas', 'show my knowledge gaps', or asks any question prefixed with 'based on my past data'.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Timeln"
+      },
+      "category": "knowledge-management",
+      "keywords": ["second-brain", "knowledge-graph", "mcp", "para", "mece", "timeln", "rag", "agent-skill"],
+      "strict": false,
+      "skills": [
+        "./skills/timeln-secondbrain"
+      ]
+    }
+  ]
+}

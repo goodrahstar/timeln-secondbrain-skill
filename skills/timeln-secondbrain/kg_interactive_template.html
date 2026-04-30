@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Timeln Knowledge Graph — research4gai@gmail.com</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0d1117; font-family:'Inter',sans-serif; overflow:hidden; color:#cdd9e5; }
+#canvas { width:100vw; height:100vh; }
+.node circle { stroke-width:1.5; cursor:pointer; transition: r 0.15s; }
+.node circle:hover { stroke:#fff; stroke-width:2.5; }
+.node text { font-size:11px; fill:#cdd9e5; pointer-events:none; text-shadow:0 1px 3px #000; }
+.link { stroke-opacity:0.5; }
+.link.gap { stroke:#ff4444; stroke-opacity:0.85; stroke-dasharray:6,3; }
+.link-label { font-size:9px; fill:#778899; pointer-events:none; }
+#tooltip {
+  position:fixed; background:rgba(22,27,34,0.97); border:1px solid #30363d;
+  border-radius:8px; padding:10px 14px; pointer-events:none; opacity:0;
+  transition:opacity 0.15s; max-width:280px; font-size:12px; line-height:1.6;
+  box-shadow:0 4px 20px rgba(0,0,0,0.5); z-index:999;
+}
+#tooltip h3 { color:#79c0ff; font-size:13px; margin-bottom:4px; }
+#tooltip .cluster-tag { display:inline-block; padding:1px 7px; border-radius:10px; font-size:10px; margin-bottom:6px; }
+#tooltip .rel-list { color:#8b949e; font-size:11px; }
+#panel {
+  position:fixed; top:16px; left:16px; background:rgba(22,27,34,0.93);
+  border:1px solid #30363d; border-radius:10px; padding:16px; width:240px;
+  z-index:100; backdrop-filter:blur(8px);
+}
+#panel h2 { font-size:13px; color:#79c0ff; margin-bottom:10px; letter-spacing:.5px; }
+#search { width:100%; background:#161b22; border:1px solid #30363d; color:#cdd9e5;
+  padding:6px 10px; border-radius:6px; font-size:12px; outline:none; }
+#search:focus { border-color:#388bfd; }
+.legend { margin-top:12px; }
+.legend-item { display:flex; align-items:center; gap:7px; margin-bottom:5px; font-size:11px; cursor:pointer; }
+.legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+#stats { margin-top:12px; font-size:11px; color:#8b949e; border-top:1px solid #21262d; padding-top:10px; }
+#info-bar { position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
+  background:rgba(22,27,34,0.93); border:1px solid #30363d; border-radius:8px;
+  padding:8px 18px; font-size:11px; color:#8b949e; letter-spacing:.3px;
+  backdrop-filter:blur(8px); }
+.gap-legend { color:#ff4444; font-size:11px; margin-top:8px; display:flex; align-items:center; gap:6px; }
+</style>
+</head>
+<body>
+<svg id="canvas"></svg>
+<div id="tooltip"></div>
+<div id="panel">
+  <h2>⬡ TIMELN KNOWLEDGE GRAPH</h2>
+  <input id="search" placeholder="Search nodes…" autocomplete="off">
+  <div class="legend" id="legend"></div>
+  <div class="gap-legend">
+    <svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="#ff4444" stroke-width="2" stroke-dasharray="5,2"/></svg>
+    Missing bridge (GAP)
+  </div>
+  <div id="stats"></div>
+</div>
+<div id="info-bar">Scroll to zoom · Drag to pan · Click node to focus · Double-click to release</div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+const GRAPH = __GRAPH_DATA__;
+
+const CLUSTER_META = {
+  claude_code: { label: "Claude Code",        color: "#388bfd" },
+  gtm:         { label: "GTM",                color: "#e67e22" },
+  linkedin:    { label: "LinkedIn / Distrib.", color: "#2ecc71" },
+  mcp_kg:      { label: "MCP / Knowledge",    color: "#a371f7" },
+  timeln:      { label: "Timeln",             color: "#f85149" },
+  ai_agents:   { label: "AI Agents",          color: "#39d353" },
+  llm:         { label: "LLMs",               color: "#ffa657" },
+  founder:     { label: "Founders",           color: "#ff7b72" },
+  cro:         { label: "Landing / CRO",      color: "#58a6ff" },
+  remotion:    { label: "Remotion / Video",   color: "#d2a8ff" },
+  design:      { label: "DESIGN.md / UI",     color: "#3fb950" },
+  email:       { label: "Email / outreach",   color: "#8b949e" },
+  gap:         { label: "Gap bridge",         color: "#ff4444" },
+};
+
+const width = window.innerWidth, height = window.innerHeight;
+const svg = d3.select("#canvas").attr("width", width).attr("height", height);
+const g = svg.append("g");
+
+// Zoom
+svg.call(d3.zoom().scaleExtent([0.05, 4]).on("zoom", e => g.attr("transform", e.transform)));
+
+// Build adjacency for tooltip
+const adjacency = {};
+GRAPH.links.forEach(l => {
+  [l.source, l.target].forEach(n => { if (!adjacency[n]) adjacency[n] = []; });
+  adjacency[l.source].push({ node: l.target, rel: l.rel, dir: "→", gap: l.gap });
+  adjacency[l.target].push({ node: l.source, rel: l.rel, dir: "←", gap: l.gap });
+});
+
+// Force simulation
+const sim = d3.forceSimulation(GRAPH.nodes)
+  .force("link", d3.forceLink(GRAPH.links).id(d => d.id).distance(d => d.gap ? 200 : 90).strength(d => d.gap ? 0.05 : 0.4))
+  .force("charge", d3.forceManyBody().strength(-220))
+  .force("center", d3.forceCenter(width/2, height/2))
+  .force("collision", d3.forceCollide(d => Math.sqrt(d.degree) * 5 + 10));
+
+// Links
+const link = g.append("g").selectAll("line")
+  .data(GRAPH.links).join("line")
+  .attr("class", d => d.gap ? "link gap" : "link")
+  .attr("stroke", d => d.gap ? "#ff4444" : (CLUSTER_META[d.source.cluster || "mcp_kg"]?.color || "#444"))
+  .attr("stroke-width", d => d.gap ? 2 : 1.2);
+
+// Nodes
+const node = g.append("g").selectAll("g")
+  .data(GRAPH.nodes).join("g")
+  .attr("class", "node")
+  .call(d3.drag()
+    .on("start", (e,d) => { if (!e.active) sim.alphaTarget(0.2).restart(); d.fx=d.x; d.fy=d.y; })
+    .on("drag",  (e,d) => { d.fx=e.x; d.fy=e.y; })
+    .on("end",   (e,d) => { if (!e.active) sim.alphaTarget(0); d.fx=null; d.fy=null; }));
+
+node.append("circle")
+  .attr("r", d => Math.sqrt(d.degree) * 4 + 5)
+  .attr("fill", d => (CLUSTER_META[d.cluster]?.color || "#555") + "cc")
+  .attr("stroke", d => CLUSTER_META[d.cluster]?.color || "#555");
+
+node.append("text")
+  .attr("dy", d => -(Math.sqrt(d.degree) * 4 + 8))
+  .attr("text-anchor", "middle")
+  .text(d => d.id.length > 28 ? d.id.slice(0,26)+"…" : d.id);
+
+// Tooltip
+const tooltip = d3.select("#tooltip");
+node.on("mouseover", (e, d) => {
+  const nbrs = adjacency[d.id] || [];
+  const relLines = nbrs.slice(0,6).map(n =>
+    `<div style="color:${n.gap?'#ff4444':'#8b949e'}">${n.dir} <b style="color:#cdd9e5">${n.node.length>30?n.node.slice(0,28)+'…':n.node}</b> <span style="color:#6e7681;font-size:10px">${n.rel.replace(/_/g,' ')}</span></div>`
+  ).join('');
+  const meta = CLUSTER_META[d.cluster] || {};
+  tooltip.html(`
+    <h3>${d.id}</h3>
+    <span class="cluster-tag" style="background:${meta.color||'#444'}33;color:${meta.color||'#fff'};border:1px solid ${meta.color||'#444'}66">${meta.label||d.cluster}</span>
+    <div class="rel-list">${relLines}</div>
+    ${nbrs.length > 6 ? `<div style="color:#6e7681;font-size:10px;margin-top:4px">+${nbrs.length-6} more connections</div>` : ''}
+  `)
+  .style("opacity", 1)
+  .style("left", (e.clientX + 14) + "px")
+  .style("top",  (e.clientY - 10) + "px");
+}).on("mouseout", () => tooltip.style("opacity", 0));
+
+// Click to focus
+let focused = null;
+node.on("click", (e, d) => {
+  e.stopPropagation();
+  if (focused === d.id) { resetFocus(); return; }
+  focused = d.id;
+  const connectedIds = new Set([d.id]);
+  GRAPH.links.forEach(l => {
+    const s = typeof l.source === 'object' ? l.source.id : l.source;
+    const t = typeof l.target === 'object' ? l.target.id : l.target;
+    if (s === d.id || t === d.id) { connectedIds.add(s); connectedIds.add(t); }
+  });
+  node.selectAll("circle").attr("opacity", n => connectedIds.has(n.id) ? 1 : 0.08);
+  node.selectAll("text").attr("opacity", n => connectedIds.has(n.id) ? 1 : 0.05);
+  link.attr("opacity", l => {
+    const s = typeof l.source === 'object' ? l.source.id : l.source;
+    const t = typeof l.target === 'object' ? l.target.id : l.target;
+    return (s === d.id || t === d.id) ? 1 : 0.03;
+  });
+});
+svg.on("dblclick", resetFocus);
+function resetFocus() {
+  focused = null;
+  node.selectAll("circle,text").attr("opacity", 1);
+  link.attr("opacity", 1);
+}
+
+// Search
+d3.select("#search").on("input", function() {
+  const q = this.value.toLowerCase().trim();
+  if (!q) { resetFocus(); return; }
+  node.selectAll("circle").attr("opacity", n => n.id.toLowerCase().includes(q) ? 1 : 0.07);
+  node.selectAll("text").attr("opacity", n => n.id.toLowerCase().includes(q) ? 1 : 0.04);
+  link.attr("opacity", 0.04);
+});
+
+// Legend
+const legendEl = document.getElementById("legend");
+Object.entries(CLUSTER_META).filter(([k]) => k !== "gap").forEach(([k, v]) => {
+  const item = document.createElement("div");
+  item.className = "legend-item";
+  item.innerHTML = `<div class="legend-dot" style="background:${v.color}"></div><span>${v.label}</span>`;
+  item.onclick = () => {
+    const q = k;
+    node.selectAll("circle").attr("opacity", n => n.cluster === q ? 1 : 0.06);
+    node.selectAll("text").attr("opacity", n => n.cluster === q ? 1 : 0.03);
+    link.attr("opacity", l => {
+      const sid = typeof l.source === "object" ? l.source.id : l.source;
+      const tid = typeof l.target === "object" ? l.target.id : l.target;
+      const sn = GRAPH.nodes.find(n => n.id === sid);
+      const tn = GRAPH.nodes.find(n => n.id === tid);
+      return (sn?.cluster === q || tn?.cluster === q) ? 0.9 : 0.03;
+    });
+  };
+  legendEl.appendChild(item);
+});
+
+// Stats
+const gapCount = GRAPH.links.filter(l => l.gap).length;
+document.getElementById("stats").innerHTML =
+  `${GRAPH.nodes.length} nodes &nbsp;·&nbsp; ${GRAPH.links.length} edges<br>
+   <span style="color:#ff4444">${gapCount} missing bridge${gapCount === 1 ? "" : "s"} identified</span>`;
+
+// Tick
+sim.on("tick", () => {
+  link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+      .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+  node.attr("transform", d => `translate(${d.x},${d.y})`);
+});
+</script>
+</body>
+</html>

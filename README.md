@@ -24,6 +24,8 @@
 npx skills add goodrahstar/timeln-secondbrain-skill
 ```
 
+> The skill lives in [`skills/timeln-secondbrain/`](skills/timeln-secondbrain/) — compatible with any agent that follows the [skills.sh](https://skills.sh) standard.
+
 **What you get:**
 - 🧠 Your AI answers grounded in **your** documents — no hallucinations.
 - 🗺️ MECE gap analysis + PARA framework, applied live to your real knowledge graph.
